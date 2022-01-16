@@ -1,7 +1,8 @@
 import http from "http";
-import { WebSocketServer } from 'ws';
+//import { WebSocketServer } from 'ws';
 import express from "express";
 import path from 'path';
+import { Server } from "socket.io";
 
 const __dirname = path.resolve();
 const app = express();
@@ -13,15 +14,25 @@ app.get("/", (_, res) => res.render("home"));
 app.get("/*", (_, res) => res.redirect("/"));
 
 
-const server = http.createServer(app);
+const httpServer = http.createServer(app);
+const wsServer = new Server(httpServer);
+//const wss = new WebSocketServer({ server });
 
-const wss = new WebSocketServer({ server });
+wsServer.on("connection", (socket) => {
+    socket.onAny((event) => {
+        console.log(`Socket Event:${event}`);
+    });
+    socket.on("enter_room", (roomName, done) => {
+        socket.join(roomName);
+        done();
+    });
+})
 
 function handleConnection(socket) {
     console.log(socket)
 }
 
-const sockets = [];
+/* const sockets = [];
 
 wss.on("connection", (socket) => {
     sockets.push(socket);
@@ -45,6 +56,6 @@ wss.on("connection", (socket) => {
         }
         //console.log(parsed, message.toString('utf-8'));
     });
-})
+}) */
 
-server.listen(4000);
+httpServer.listen(4000);
